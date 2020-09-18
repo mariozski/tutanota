@@ -18,7 +18,7 @@ export type RecipientInfo = {|
 |}
 
 export function isExternal(recipientInfo: RecipientInfo): boolean {
-	return recipientInfo.type === RecipientInfoType.EXTERNAL
+	return recipientInfo.type === RecipientInfoType.EXTERNAL || !isTutanotaMailAddress(recipientInfo.mailAddress)
 }
 
 export function isExternalSecureRecipient(recipientInfo: RecipientInfo): boolean {

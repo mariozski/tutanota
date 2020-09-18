@@ -7,7 +7,7 @@ import {calendarAttendeeStatusSymbol, formatEventDuration, getTimeZone} from "./
 import type {CalendarEvent} from "../api/entities/tutanota/CalendarEvent"
 import {stringToUtf8Uint8Array, uint8ArrayToBase64} from "../api/common/utils/Encoding"
 import {defaultTheme} from "../gui/theme"
-import {assertNotNull, noOp} from "../api/common/utils/Utils"
+import {assertNotNull, downcast, noOp} from "../api/common/utils/Utils"
 import {SendMailModel} from "../mail/SendMailModel"
 import type {Mail} from "../api/entities/tutanota/Mail"
 import {windowFacade} from "../misc/WindowFacade"
@@ -87,18 +87,18 @@ export class CalendarMailDistributor implements CalendarUpdateDistributor {
 					              previousMail: responseTo,
 					              conversationType: ConversationType.REPLY,
 					              senderMailAddress: sendAs,
-					              recipients: {to: [{name: organizer.name, address: organizer.address}]},
+					              toRecipients: [downcast(organizer)], // TODO not sure if downcast from EncryptedMailAddress to MailAddress is a good or bad thing
+					              ccRecipients: [],
+					              bccRecipients: [],
 					              attachments: [],
 					              bodyText: body,
 					              subject: message,
-					              addSignature: false,
-					              blockExternalContent: false,
 					              replyTos: [],
 				              })
 			              })
-			              .then(() => {
-				              sendMailModel.attachFiles([makeInvitationCalendarFile(event, CalendarMethod.REPLY, new Date(), getTimeZone())])
-				              return sendMailModel.send(body, MailMethod.ICAL_REPLY)
+			              .then(model => {
+				              model.attachFiles([makeInvitationCalendarFile(event, CalendarMethod.REPLY, new Date(), getTimeZone())])
+				              return model.send(MailMethod.ICAL_REPLY)
 			              })
 			              .finally(() => this._sendEnd())
 		} else {
@@ -118,8 +118,9 @@ export class CalendarMailDistributor implements CalendarUpdateDistributor {
 		sendMailModel.selectSender(sender)
 		sendMailModel.attachFiles([inviteFile])
 		sendMailModel.setSubject(subject)
+		sendMailModel.setBody(body)
 		this._sendStart()
-		return sendMailModel.send(body, method)
+		return sendMailModel.send(method)
 		                    .finally(() => this._sendEnd())
 	}
 

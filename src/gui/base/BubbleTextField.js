@@ -11,7 +11,6 @@ import type {KeyPress} from "../../misc/KeyManager"
 
 assertMainOrNode()
 
-
 /**
  * The BubbleInputField delegates certain tasks like retrieving suggestions and creating bubbles
  * to the BubbleHandler.
@@ -28,10 +27,10 @@ export interface BubbleHandler<T, S:Suggestion> {
 	 * @param suggestion The suggestion.
 	 * @return Returns the new bubble or null if none could be created.
 	 */
-	createBubbleFromSuggestion(suggestion: S): Bubble<T>;
+	createBubbleFromSuggestion(suggestion: S): ?Bubble<T>;
 
 	/**
-	 * Creates a new bubble from the provided text.
+	 * Creates a list of bubbles from the provided text.
 	 * @param text
 	 * @return Returns the new bubble or null if none could be created.
 	 */
@@ -230,7 +229,7 @@ export class BubbleTextField<T> {
 			}
 		}
 		m.redraw()
-		return false //TODO: explain
+		return false
 	}
 
 	handleBackspace() {

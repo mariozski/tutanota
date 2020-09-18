@@ -297,7 +297,7 @@ interface Attributes {
 	[key: string]: any;
 }
 
-type $Attrs<T> = $ReadOnly<$Exact<T>>
+export type $Attrs<T> = $ReadOnly<$Exact<T>>
 
 interface MComponent<Attrs> extends Lifecycle<Attrs> {
 	/** Creates a view out of virtual elements. */

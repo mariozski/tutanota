@@ -94,7 +94,7 @@ export function replyToEventInvitation(
 		calendarModel.loadOrCreateCalendarInfo().then(findPrivateCalendar),
 		locator.mailModel.getMailboxDetailsForMail(previousMail)
 	]).then(([calendar, mailboxDetails]) => {
-		const sendMailModel = new SendMailModel(logins, locator.mailModel, locator.contactModel, locator.eventController, mailboxDetails)
+		const sendMailModel = new SendMailModel(worker, logins, locator.mailModel, locator.contactModel, locator.eventController, locator.entityClient, mailboxDetails)
 		return calendarUpdateDistributor
 			.sendResponse(eventClone, sendMailModel, foundAttendee.address.address, previousMail, decision)
 			.catch(UserError, (e) => Dialog.error(() => e.message))

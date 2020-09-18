@@ -1,4 +1,3 @@
-
 //@flow
 
 import {identity, neverNull} from "./Utils"
@@ -243,4 +242,22 @@ export function zip<A, B>(arr1: Array<A>, arr2: Array<B>): Array<[A, B]> {
 		zipped.push([arr1[i], arr2[i]])
 	}
 	return zipped
+}
+
+/**
+ * Partition an array into 2 based on a condition, where matching elements for into the left array, and non-matching into the right
+ * @param arr
+ * @param condition
+ */
+export function partition<T>(arr: Array<T>, condition: (T) => boolean): [Array<T>, Array<T>] {
+	const left = []
+	const right = []
+	arr.forEach(elem => {
+		if (condition(elem)) {
+			left.push(elem)
+		} else {
+			right.push(elem)
+		}
+	})
+	return [left, right]
 }

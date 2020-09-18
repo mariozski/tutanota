@@ -46,6 +46,7 @@ import {startsWith} from "../api/common/utils/StringUtils"
 import {Request} from "../api/common/WorkerProtocol.js"
 import {ConversationEntryTypeRef} from "../api/entities/tutanota/ConversationEntry"
 import {
+	bodyTextWithSignature,
 	createNewContact,
 	getArchiveFolder,
 	getDefaultSender,
@@ -119,6 +120,10 @@ import {EventBanner} from "./EventBanner"
 import {checkApprovalStatus} from "../misc/LoginUtils"
 import {getEventFromFile} from "../calendar/CalendarInvites"
 import type {CalendarEvent} from "../api/entities/tutanota/CalendarEvent"
+import {newMailEditorAsResponse, newMailEditorFromDraft} from "./MailEditorN"
+import type {MailboxDetail} from "./MailModel"
+import type {ResponseMailParameters} from "./SendMailModel"
+import {defaultSendMailModel} from "./SendMailModel"
 
 assertMainOrNode()
 
@@ -1179,16 +1184,8 @@ export class MailViewer {
 			if (sendAllowed) {
 				return locator.mailModel.getMailboxDetailsForMail(this.mail)
 				              .then((mailboxDetails) => {
-					              let editor: MailEditor = new MailEditor(mailboxDetails)
-					              return editor.initFromDraft({
-						              draftMail: this.mail,
-						              attachments: this._attachments,
-						              bodyText: this._getMailBody(),
-						              blockExternalContent: this._contentBlocked,
-						              inlineImages: this._inlineImages
-					              }).then(() => {
-						              editor.show()
-					              })
+					              newMailEditorFromDraft(this.mail, this._attachments, this._getMailBody(), this._contentBlocked, this._inlineImages, mailboxDetails)
+						              .then(editorDialog => editorDialog.show())
 				              })
 			}
 		})
@@ -1234,9 +1231,8 @@ export class MailViewer {
 							addAll(bccRecipients, this.mail.bccRecipients)
 						}
 					}
-					const editor: MailEditor = new MailEditor(mailboxDetails)
 					return this._getSenderOfResponseMail().then((senderMailAddress) => {
-						return editor.initAsResponse({
+						return newMailEditorAsResponse({
 							previousMail: this.mail,
 							conversationType: ConversationType.REPLY,
 							senderMailAddress,
@@ -1245,13 +1241,10 @@ export class MailViewer {
 							bccRecipients,
 							attachments: [],
 							subject,
-							bodyText: body,
+							bodyText: bodyTextWithSignature(body),
 							replyTos: [],
-							addSignature: true,
-							inlineImages: this._inlineImages,
-							blockExternalContent: this._contentBlocked
-						})
-					}).then(() => {
+						}, mailboxDetails, this._contentBlocked, this._inlineImages)
+					}).then(editor => {
 						editor.show()
 					})
 				})
@@ -1270,14 +1263,17 @@ export class MailViewer {
 	_forward() {
 		return checkApprovalStatus(false).then(sendAllowed => {
 			if (sendAllowed) {
-				return this._createForwardingMailEditor([], [], true, true).then(editor => {
-					editor.show()
+				return this._createResponseMailEditorArgsForForwarding([], [], true).then(args => {
+					return this._getMailboxDetails().then(mailboxDetails => {
+						newMailEditorAsResponse(args, mailboxDetails, this._contentBlocked, this._inlineImages)
+							.then(editor => editor.show())
+					})
 				})
 			}
 		})
 	}
 
-	_createForwardingMailEditor(recipients: MailAddress[], replyTos: EncryptedMailAddress[], addSignature: boolean, replaceInlineImages: boolean): Promise<MailEditor> {
+	_createResponseMailEditorArgsForForwarding(recipients: MailAddress[], replyTos: EncryptedMailAddress[], addSignature: boolean): Promise<ResponseMailParameters> {
 		let infoLine = lang.get("date_label") + ": " + formatDateTime(this.mail.sentDate) + "<br>"
 		infoLine += lang.get("from_label") + ": " + this.mail.sender.address + "<br>"
 		if (this.mail.toRecipients.length > 0) {
@@ -1294,26 +1290,24 @@ export class MailViewer {
 
 		let body = infoLine + "<br><br><blockquote class=\"tutanota_quote\">" + this._getMailBody() + "</blockquote>";
 
-		return locator.mailModel.getMailboxDetailsForMail(this.mail).then((mailboxDetails) => {
-			return this._getSenderOfResponseMail().then((senderMailAddress) => {
-				const editor: MailEditor = new MailEditor(mailboxDetails)
-				return editor.initAsResponse({
-					previousMail: this.mail,
-					conversationType: ConversationType.FORWARD,
-					senderMailAddress,
-					toRecipients: recipients,
-					ccRecipients: [],
-					bccRecipients: [],
-					attachments: this._attachments.slice(),
-					subject: "FWD: " + this.mail.subject,
-					bodyText: body,
-					replyTos,
-					addSignature,
-					inlineImages: replaceInlineImages ? this._inlineImages : null,
-					blockExternalContent: this._contentBlocked
-				}).then(() => editor)
-			})
+		return this._getSenderOfResponseMail().then((senderMailAddress) => {
+			return {
+				previousMail: this.mail,
+				conversationType: ConversationType.FORWARD,
+				senderMailAddress,
+				toRecipients: recipients,
+				ccRecipients: [],
+				bccRecipients: [],
+				attachments: this._attachments.slice(),
+				subject: "FWD: " + this.mail.subject,
+				bodyText: addSignature ? bodyTextWithSignature(body) : body,
+				replyTos,
+			}
 		})
+	}
+
+	_getMailboxDetails(): Promise<MailboxDetail> {
+		return locator.mailModel.getMailboxDetailsForMail(this.mail)
 	}
 
 	_getAssignableMailRecipients(): Promise<GroupInfo[]> {
@@ -1343,8 +1337,10 @@ export class MailViewer {
 			newReplyTos[0].name = this.mail.sender.name
 		}
 
-		this._createForwardingMailEditor([recipient], newReplyTos, false, false).then(editor => {
-			return editor.send()
+		return this._createResponseMailEditorArgsForForwarding([recipient], newReplyTos, false).then(args => {
+			return this._getMailboxDetails().then(mailboxDetails => {
+				return defaultSendMailModel(mailboxDetails).initAsResponse(args).then(model => model.send(MailMethod.NONE))
+			})
 		}).then(() => locator.mailModel.getMailboxFolders(this.mail)).then((folders) => {
 			locator.mailModel.moveMails([this.mail], getArchiveFolder(folders))
 		})

@@ -6,7 +6,9 @@ import {ButtonN, isVisible} from "./ButtonN"
 export type DialogHeaderBarAttrs = {|
 	left?: Array<ButtonAttrs>,
 	right?: Array<ButtonAttrs>,
-	middle?: lazy<string>
+	middle?: lazy<string>,
+	create?: () => void,
+	remove?: () => void,
 |}
 
 /**
@@ -17,7 +19,10 @@ class _DialogHeaderBar {
 	view(vnode: Vnode<LifecycleAttrs<DialogHeaderBarAttrs>>): VirtualElement {
 		const a = Object.assign({}, {left: [], right: []}, vnode.attrs)
 		let columnClass = a.middle ? ".flex-third.overflow-hidden" : ".flex-half.overflow-hidden"
-		return m(".flex-space-between.dialog-header-line-height", [
+		return m(".flex-space-between.dialog-header-line-height", {
+			oncreate: () => { if (a.create) a.create() },
+			onremove: () => { if (a.remove) a.remove() },
+		}, [
 			m(columnClass + ".ml-negative-s", a.left.map(a => isVisible(a) ? m(ButtonN, a) : null)),
 			// ellipsis is not working if the text is directly in the flex element, so create a child div for it
 			a.middle ? m("#dialog-title.flex-third-middle.overflow-hidden.flex.justify-center.items-center.b", [m(".text-ellipsis", a.middle())]) : null,

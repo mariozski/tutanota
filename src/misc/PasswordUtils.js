@@ -1,5 +1,10 @@
 //@flow
 import {assertMainOrNode} from "../api/Env"
+import type {RecipientInfo} from "../api/common/RecipientInfo"
+import type {MailboxDetail} from "../mail/MailModel"
+import {getEnabledMailAddressesWithUser, getMailboxName} from "../mail/MailUtils"
+import type {LoginController} from "../api/main/LoginController"
+import {logins as globalLogins} from "../api/main/LoginController"
 
 assertMainOrNode()
 
@@ -67,6 +72,15 @@ export function getPasswordStrength(password: string, badStrings: string[]) {
 	strength -= nbrOfBadStringDigits * 4
 
 	return Math.min(100, Math.max(0, Math.round(strength)))
+}
+
+export function getPasswordStrengthForUser(password: string, recipientInfo: RecipientInfo, mailboxDetails: MailboxDetail, logins: LoginController = globalLogins): number {
+	let reserved = getEnabledMailAddressesWithUser(mailboxDetails, logins.getUserController().userGroupInfo).concat(
+		getMailboxName(logins, mailboxDetails),
+		recipientInfo.mailAddress,
+		recipientInfo.name
+	)
+	return Math.min(100, getPasswordStrength(password, reserved))
 }
 
 /**

@@ -22,7 +22,7 @@ import {TimePicker} from "../gui/base/TimePicker"
 import {createRecipientInfo, getDisplayText} from "../mail/MailUtils"
 import type {MailboxDetail} from "../mail/MailModel"
 import {Bubble, BubbleTextField} from "../gui/base/BubbleTextField"
-import {MailAddressBubbleHandler} from "../misc/MailAddressBubbleHandler"
+import {RecipientInfoBubbleHandler} from "../misc/RecipientInfoBubbleHandler"
 import type {Contact} from "../api/entities/tutanota/Contact"
 import {attachDropdown, createDropdown} from "../gui/base/DropdownN"
 import {HtmlEditor} from "../gui/base/HtmlEditor"
@@ -486,7 +486,7 @@ function makeBubbleTextField(viewModel: CalendarEventViewModel): BubbleTextField
 		return buttonAttrs
 	}
 
-	const bubbleHandler = new MailAddressBubbleHandler({
+	const bubbleHandler = new RecipientInfoBubbleHandler({
 		createBubble(name: ?string, mailAddress: string, contact: ?Contact): Bubble<RecipientInfo> {
 			const recipientInfo = createRecipientInfo(mailAddress, name, contact)
 			const buttonAttrs = attachDropdown({
