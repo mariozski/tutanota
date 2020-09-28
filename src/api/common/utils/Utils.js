@@ -263,6 +263,24 @@ export function debounceStart<F: (...args: any) => void>(timeout: number, toThro
 	})
 }
 
+/**
+ * Returns a throttled function. When invoked for the first time, it will be invoked with {@param timeout} as delay.
+ * This parameter {@param timeout} also defines the maximum rate, at which the function may be run. Additional invocations will be ignored.
+ * Note that the last function invocation may be discarded if is in throttled state (that is already waiting for execution).
+ **/
+export function throttle<F: (...args: any) => void>(timeOut: number, toThrottle: F): F {
+	let inThrottle = false
+	return downcast((...args: any) => {
+		if (!inThrottle) {
+			inThrottle = true
+			setTimeout(() => {
+				toThrottle.apply(null, args)
+				inThrottle = false
+			}, timeOut)
+		}
+	})
+}
+
 export function randomIntFromInterval(min: number, max: number): number {
 	return Math.floor(Math.random() * (max - min + 1) + min);
 }

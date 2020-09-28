@@ -20,7 +20,7 @@ import {
 	isTutanotaTeamMail,
 	showDeleteConfirmationDialog
 } from "./MailUtils"
-import {findAndApplyMatchingRule, isInboxList} from "./InboxRuleHandler"
+import {findAndApplyMatchingRulesToMultipleMails, isInboxList} from "./InboxRuleHandler"
 import {NotFoundError} from "../api/common/error/RestError"
 import {px, size} from "../gui/size"
 import {Icon} from "../gui/base/Icon"
@@ -172,8 +172,8 @@ export class MailListView implements Component {
 					m(".small.flex-grow.pt", lang.get("storageDeletion_msg")),
 					m(".mr-negative-s.align-self-end", m(ButtonN, purgeButtonAttrs))
 				]),
-			m(".rel.flex-grow", m(this.list))
-		])
+				m(".rel.flex-grow", m(this.list))
+			])
 			: m(this.list)
 	}
 
@@ -200,9 +200,7 @@ export class MailListView implements Component {
 			return locator.mailModel.getMailboxDetailsForMailListId(this.listId).then((mailboxDetail) => {
 				if (isInboxList(mailboxDetail, this.listId)) {
 					// filter emails
-					return Promise.filter(mails, (mail) => {
-						return findAndApplyMatchingRule(mailboxDetail, mail).then(matchingMailId => !matchingMailId)
-					}).then(inboxMails => {
+					return findAndApplyMatchingRulesToMultipleMails(mailboxDetail, mails).then(inboxMails => {
 						if (mails.length === count && inboxMails.length < mails.length) {
 							//console.log("load more because of matching inbox rules")
 							return this._loadMailRange(mails[mails.length - 1]._id[1], mails.length - inboxMails.length)
