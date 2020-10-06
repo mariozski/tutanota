@@ -11,14 +11,13 @@
 		"start": "./start-desktop.sh",
 		"test": "cd test && node test api && node test client",
 		"testapi": "cd test && node test api",
-		"testclient": "cd test && node test client",
-		"postinstall": "electron-builder install-app-deps"
+		"testclient": "cd test && node test client"
 	},
 	"dependencies": {
 		"autolinker": "3.11.1",
 		"bluebird": "3.7.2",
 		"dompurify": "2.1.1",
-		"keytar": "6.0.1",
+		"keytar": "git+https://github.com/ganthern/node-keytar.git",
 		"luxon": "^1.22.0",
 		"mithril": "2.0.4",
 		"qrcode-svg": "1.0.0",
@@ -58,11 +57,9 @@
 		"server-destroy": "1.0.1",
 		"sha": "3.0.0",
 		"spdy": "4.0.1",
-		"systemjs-builder": "0.16.15",
-		"systemjs-hmr": "git+https://github.com/mpfau/systemjs-hmr.git#temp",
-		"systemjs-hot-reloader": "git+https://github.com/mpfau/systemjs-hot-reloader.git#temp",
-		"systemjs-plugin-babel": "0.0.25",
 		"winreg": "1.2.4",
-		"xhr2": "0.2.0"
+		"xhr2": "0.2.0",
+		"systemjs-plugin-babel": "0.0.25",
+		"systemjs-builder": "0.16.15"
 	}
 }
