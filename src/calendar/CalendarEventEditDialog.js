@@ -7,14 +7,13 @@ import type {CalendarInfo} from "./CalendarView"
 import m from "mithril"
 import {TextFieldN, Type as TextFieldType} from "../gui/base/TextFieldN"
 import {lang} from "../misc/LanguageViewModel"
-import type {DropDownSelectorAttrs, SelectorItemList} from "../gui/base/DropDownSelectorN"
+import type {DropDownSelectorAttrs} from "../gui/base/DropDownSelectorN"
 import {DropDownSelectorN} from "../gui/base/DropDownSelectorN"
 import {Icons} from "../gui/base/icons/Icons"
 import type {CalendarEvent} from "../api/entities/tutanota/CalendarEvent"
 import {downcast, memoized, noOp} from "../api/common/utils/Utils"
 import type {ButtonAttrs} from "../gui/base/ButtonN"
 import {ButtonColors, ButtonN, ButtonType} from "../gui/base/ButtonN"
-import type {CalendarAttendeeStatusEnum} from "../api/common/TutanotaConstants"
 import {AlarmInterval, CalendarAttendeeStatus, EndType, Keys, RepeatPeriod} from "../api/common/TutanotaConstants"
 import {findAndRemove, numberRange, remove} from "../api/common/utils/ArrayUtils"
 import {getCalendarName, getStartOfTheWeekOffsetForUser} from "./CalendarUtils"
@@ -71,8 +70,16 @@ export function showCalendarEventDialog(date: Date, calendars: Map<Id, CalendarI
 	const endDatePicker = new DatePicker(startOfTheWeekOffset, "dateTo_label", "emptyString_msg", viewModel.isReadOnlyEvent())
 	startDatePicker.setDate(viewModel.startDate)
 	endDatePicker.setDate(viewModel.endDate)
-	startDatePicker.date.map((date) => viewModel.onStartDateSelected(date))
-	endDatePicker.date.map((date) => viewModel.onEndDateSelected(date))
+	startDatePicker.date.map((date) => {
+		viewModel.onStartDateSelected(date)
+		if (endDatePicker.date() !== viewModel.endDate) {
+			endDatePicker.setDate(viewModel.endDate)
+		}
+	})
+
+	endDatePicker.date.map((date) => {
+		viewModel.onEndDateSelected(date)
+	})
 
 	const repeatValues = createRepeatValues()
 	const intervalValues = createIntevalValues()
@@ -344,7 +351,6 @@ export function showCalendarEventDialog(date: Date, calendars: Map<Id, CalendarI
 	viewModel.sendingOutUpdate.map(m.redraw)
 
 	function renderDialogContent() {
-
 
 		return m(".calendar-edit-container.pb", [
 				renderHeading(),

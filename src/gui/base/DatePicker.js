@@ -16,6 +16,7 @@ import type {CalendarDay} from "../../calendar/CalendarUtils"
 import {getCalendarMonth} from "../../calendar/CalendarUtils"
 import {DateTime} from "luxon"
 import {getAllDayDateLocal} from "../../api/common/utils/CommonCalendarUtils"
+import {Keys} from "../../api/common/TutanotaConstants"
 
 /**
  * The HTML input[type=date] is not usable on desktops because:
@@ -73,6 +74,17 @@ export class DatePicker implements Component {
 		this.input.onblur.map(() => {
 			this.date(inputDate)
 		})
+		this.input._keyHandler = (key) => {
+			if (key.keyCode === Keys.RETURN.code) {
+				// this._onSelected(attrs)
+				this._showingDropdown = false
+				document.activeElement && document.activeElement.blur()
+			}
+			if (key.keyCode === Keys.TAB.code) {
+				this._showingDropdown = false
+			}
+			return true
+		}
 	}
 
 	_documentClickListener: ?MouseEventListener;
@@ -86,6 +98,7 @@ export class DatePicker implements Component {
 						this._showingDropdown = true
 					}
 				},
+
 			}, m(this.input)),
 			this._showingDropdown
 				? m(".fixed.content-bg.z3.menu-shadow.plr.pb-s", {
